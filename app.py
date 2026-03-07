@@ -1,4 +1,4 @@
-from langchain_community.document_loaders import TextLoader
+from langchain_community.document_loaders import DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
@@ -10,8 +10,12 @@ load_dotenv()
 
 # Load documents
 print("Loading documents...")
-loader = TextLoader("data/docs.txt", encoding="utf-8")
-documents = loader.load()
+# Load txt files
+txt_loader = DirectoryLoader("data/", glob="**/*.txt", loader_cls=TextLoader)
+# Load PDFs
+pdf_loader = DirectoryLoader("data/", glob="**/*.pdf", loader_cls=PyPDFLoader)
+
+documents = txt_loader.load() + pdf_loader.load()
 
 # Split into chunks
 print("Splitting documents...")
