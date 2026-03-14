@@ -36,3 +36,15 @@ Mitigation strategies:
 - larger chunk sizes
 - improved prompts
 - retrieving additional context chunks
+
+## Example queries
+- What is Clock Domain Crossing?
+- What is metastability?
+- Why is CDC verification important?
+- What is the proposed verification methodology in the paper?
+  
+## Screenshots
+Example interaction with the assistant:
+![RAG Demo](screenshots/rag-demo.png)
+
+## Future Improvements
