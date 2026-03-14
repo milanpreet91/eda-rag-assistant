@@ -45,6 +45,6 @@ Mitigation strategies:
   
 ## Screenshots
 Example interaction with the assistant:
-![RAG Demo](screenshots/rag-demo.png)
+![RAG Demo](screenshots/rag-demo.PNG)
 
 ## Future Improvements
