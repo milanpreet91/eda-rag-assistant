@@ -1,9 +1,9 @@
-from langchain_community.document_loaders import DirectoryLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import DirectoryLoader, TextLoader, PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_groq import ChatGroq
-from langchain.chains import RetrievalQA
+from langchain_core.prompts import ChatPromptTemplate
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -19,7 +19,7 @@ documents = txt_loader.load() + pdf_loader.load()
 
 # Split into chunks
 print("Splitting documents...")
-splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
 chunks = splitter.split_documents(documents)
 
 # Create embeddings and vector store
@@ -30,18 +30,36 @@ vectorstore = Chroma.from_documents(chunks, embeddings, persist_directory="./chr
 # Set up LLM and QA chain
 print("Setting up LLM...")
 llm = ChatGroq(
-    model="llama3-8b-8192",  
+    model="llama-3.1-8b-instant",  
     api_key=os.getenv("GROQ_API_KEY")
 )
-qa_chain = RetrievalQA.from_chain_type(
-    llm=llm,
-    retriever=vectorstore.as_retriever()
-)
+
+prompt = ChatPromptTemplate.from_template("""
+You are an expert assistant.
+
+Answer the question ONLY using the context below.
+
+If the answer exists in the context, provide it clearly.
+
+If the context contains lists or tables, extract the items clearly.
+
+Context:
+{context}
+
+Question:
+{question}
+""")
+retriever = vectorstore.as_retriever(search_kwargs={"k":6})
+
 # Interactive Q&A loop
 print("\nEDA RAG Assistant ready! Type 'exit' to quit.\n")
+
 while True:
     question = input("Ask a question: ")
     if question.lower() == "exit":
         break
-    answer = qa_chain.invoke(question)
-    print(f"\nAnswer: {answer['result']}\n")
+    docs = retriever.invoke(question)
+    context = "\n\n".join([d.page_content for d in docs])
+    chain = prompt | llm
+    answer = chain.invoke({"context": context, "question": question})
+    print(f"\nAnswer: {answer.content}\n")
